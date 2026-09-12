@@ -10,6 +10,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
 <link rel="stylesheet" href="style.css">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem("theme");
+      var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -19,6 +28,10 @@
   <div class="win-dots"><i></i><i></i><i></i></div>
   <div class="win-tab"><span class="dot"></span><span id="tabLabel">about.md</span></div>
   <div class="win-path" id="pathLabel">~/jiacheng-wen/portfolio/about.md</div>
+  <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to light theme">
+    <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+    <span id="themeToggleLabel" class="mono-label">dark</span>
+  </button>
 </div>
 
 <div class="layout">
@@ -32,6 +45,7 @@
         <li><button data-file="experience">experience.md</button></li>
         <li><button data-file="research">research.md</button></li>
         <li><button data-file="projects">projects.md</button></li>
+        <li><button data-file="github">github.md</button></li>
         <li><button data-file="hobbies">hobbies.md</button></li>
         <li><button data-file="eating">eating.md</button></li>
         <li><button data-file="contact">contact.md</button></li>
@@ -146,6 +160,11 @@
     <section class="file" data-file="projects" hidden>
       <div class="h1">projects</div>
       <div class="proj">
+        <div class="proj-top"><div class="h3">PandaHacks</div><span class="yr">2026</span></div>
+        <p>A hackathon application portal — applicants apply as Hacker or Judge, organizers review and grade from one dashboard. Built for the Cal Hacks tech team take-home assessment.</p>
+        <div class="meta">next.js 16 · typescript · supabase · postgres rls — <b>row-level security</b> enforced in the database, not just the UI · <a href="https://github.com/jiachengw-sf/cal_hack_fa26" class="link">source</a> · <a href="https://cal-hack-fa26.vercel.app" class="link">live</a></div>
+      </div>
+      <div class="proj">
         <div class="proj-top"><div class="h3">Multi-Agent Reinforcement Learning Simulation</div><span class="yr">2025</span></div>
         <p>Two competing AI agents trained via self-play with reward-and-penalty mechanics in a fighting-game-style environment.</p>
         <div class="meta">python · numpy · marl · self-play — <b>applied policy optimization</b> to iterate on agent strategy</div>
@@ -153,17 +172,27 @@
       <div class="proj">
         <div class="proj-top"><div class="h3">Malicious URL &amp; Phishing Detector</div><span class="yr">2026</span></div>
         <p>Engineered lexical/structural features (URL length, subdomain count, suspicious TLDs/keywords) from 650k+ labeled URLs.</p>
-        <div class="meta">python · pandas · scikit-learn · streamlit — <b>83% accuracy</b>, 0.80 recall / 0.72 precision on malicious class</div>
+        <div class="meta">python · pandas · scikit-learn · streamlit — <b>83% accuracy</b>, 0.80 recall / 0.72 precision on malicious class · <a href="https://github.com/jiachengw-sf/phishing-detector" class="link">source</a></div>
       </div>
       <div class="proj">
         <div class="proj-top"><div class="h3">SN5 Telemetry Site</div><span class="yr">2026</span></div>
         <p>Full-stack app to upload and visualize racecar CAN-bus telemetry, backed by a FastAPI REST API and SQLite.</p>
-        <div class="meta">python · fastapi · pandas · sveltekit — <b>z-score anomaly detection</b> flags sensor deviations automatically</div>
+        <div class="meta">python · fastapi · pandas · sveltekit — <b>z-score anomaly detection</b> flags sensor deviations automatically · <a href="https://github.com/jiachengw-sf/feb_fa26_cs" class="link">source</a></div>
       </div>
       <div class="proj">
         <div class="proj-top"><div class="h3">Scheme Interpreter</div><span class="yr">2026</span></div>
         <p>A Read-Eval-Print Loop (REPL) Scheme interpreter, with a syntactic parser converting raw code into nested ASTs.</p>
         <div class="meta">python · scheme — <b>solo project</b></div>
+      </div>
+    </section>
+
+    <section class="file" data-file="github" hidden>
+      <div class="h1">github.md</div>
+      <p class="gallery-note">Pulled live from <a href="https://github.com/jiachengw-sf" class="link">github.com/jiachengw-sf</a> via the public API — whatever's actually on there right now, not a snapshot I typed in.</p>
+      <div id="repoGrid" class="repo-grid" aria-live="polite">
+        <div class="repo-card repo-skel"><div class="skel-line w60"></div><div class="skel-line w90"></div><div class="skel-line w40"></div></div>
+        <div class="repo-card repo-skel"><div class="skel-line w60"></div><div class="skel-line w90"></div><div class="skel-line w40"></div></div>
+        <div class="repo-card repo-skel"><div class="skel-line w60"></div><div class="skel-line w90"></div><div class="skel-line w40"></div></div>
       </div>
     </section>
 
