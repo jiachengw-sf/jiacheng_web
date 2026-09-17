@@ -173,10 +173,10 @@ a:focus-visible, button:focus-visible{outline:2px solid var(--amber);outline-off
 .pad-cell{
   border-radius:2px;
   background:var(--amber);
-  background:color-mix(in srgb, var(--amber), white calc(var(--v, 0) * 50%));
-  opacity:calc(0.025 + 1 * var(--v, 0));
+  background:color-mix(in srgb, var(--amber), white calc(var(--v, 0) * 88%));
+  opacity:calc(0.008 + 1 * var(--v, 0));
   transform:scale(calc(0.68 + 0.62 * var(--v, 0))) translateY(var(--lift, 0px));
-  box-shadow:0 calc(var(--v, 0) * 12px) calc(var(--v, 0) * 18px) calc(var(--v, 0) * -4px) var(--amber);
+  box-shadow:0 calc(var(--v, 0) * 16px) calc(var(--v, 0) * 26px) calc(var(--v, 0) * -3px) var(--amber);
   transition:opacity .12s linear, background-color .12s linear, transform .1s linear, box-shadow .16s ease-out;
 }
 @media (prefers-reduced-motion:reduce){

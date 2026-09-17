@@ -244,10 +244,12 @@
         c.v += (target - c.v) * 0.3;
         c.hoverV += (hoverTarget - c.hoverV) * 0.25;
 
-        // Bobbing only happens where the cursor actually is (hoverV > 0) —
-        // idle shimmer never bobs, it only dims/brightens in place.
-        var bob = padReduceMotion ? 0 : Math.sin(time * c.bobFreq + c.bobPhase) * 5 * c.hoverV;
-        var lift = -8 * c.v + bob;
+        // Every cell drifts gently all the time (natural idle float), and
+        // cells the cursor is actually near get extra, faster bobbing on
+        // top of that.
+        var idleBob = padReduceMotion ? 0 : Math.sin(time * c.freq + c.phase) * 2.5;
+        var hoverBob = padReduceMotion ? 0 : Math.sin(time * c.bobFreq + c.bobPhase) * 5 * c.hoverV;
+        var lift = -8 * c.v + idleBob + hoverBob;
 
         c.el.style.setProperty("--v", c.v.toFixed(3));
         c.el.style.setProperty("--lift", lift.toFixed(2) + "px");
