@@ -172,7 +172,13 @@
       var cell = document.createElement("span");
       cell.className = "pad-cell";
       frag.appendChild(cell);
-      cells.push({ el: cell, x: 0, y: 0, v: 0 });
+      cells.push({
+        el: cell, x: 0, y: 0, v: 0,
+        phase: Math.random() * Math.PI * 2,
+        freq: 0.25 + Math.random() * 0.7,
+        amp: 0.07 + Math.random() * 0.16,
+        base: 0.03 + Math.random() * 0.07
+      });
     }
     gridEl.appendChild(frag);
 
@@ -229,7 +235,7 @@
           target = Math.max(0, 1 - dist / RADIUS);
           target = target * target;
         } else if (!padReduceMotion) {
-          target = Math.max(0, 0.12 + 0.14 * Math.sin(time * 0.6 + i * 0.35));
+          target = Math.max(0, c.base + c.amp * Math.sin(time * c.freq + c.phase));
         }
         c.v += (target - c.v) * 0.3;
         c.el.style.setProperty("--v", c.v.toFixed(3));
