@@ -184,6 +184,13 @@ a:focus-visible, button:focus-visible{outline:2px solid var(--amber);outline-off
 @media (prefers-reduced-motion:reduce){
   .pad-cell{transition:none;transform:none;box-shadow:none;}
 }
+@media (max-width:560px){
+  /* On a phone the sidebar's file list + contact links already run ~530px
+     tall; adding another 305px of decorative grid buries the actual name
+     and bio nearly 850px down before anything readable shows up. Drop the
+     grid there so the page opens on real content instead. */
+  .pad-grid{display:none;}
+}
 
 /* ---- theme toggle ---- */
 .theme-toggle{
