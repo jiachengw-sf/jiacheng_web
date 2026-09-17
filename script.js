@@ -166,6 +166,32 @@
     if (!gridEl) return;
 
     var COLS = 64, ROWS = 8;
+
+    // Tiny 5x7 dot-matrix font, just the letters needed for the marquee text.
+    var FONT = {
+      A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+      C: ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+      E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+      G: ["01111", "10000", "10000", "10011", "10001", "10001", "01111"],
+      H: ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+      I: ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+      J: ["00111", "00010", "00010", "00010", "00010", "10010", "01100"],
+      N: ["10001", "11001", "10101", "10101", "10011", "10001", "10001"],
+      W: ["10001", "10001", "10001", "10101", "10101", "11011", "10001"],
+      " ": ["000", "000", "000", "000", "000", "000", "000"]
+    };
+    var MARQUEE_TEXT = "JIACHENG WEN    ";
+    var stripRows = ["", "", "", "", "", "", ""];
+    for (var mc = 0; mc < MARQUEE_TEXT.length; mc++) {
+      var glyph = FONT[MARQUEE_TEXT[mc]] || FONT[" "];
+      for (var gr = 0; gr < 7; gr++) {
+        stripRows[gr] += glyph[gr] + "0"; // 1-column gap after each character
+      }
+    }
+    var STRIP_WIDTH = stripRows[0].length;
+    var MARQUEE_ROW_OFFSET = 1; // leaves 1 blank row at the top of the 8-row grid
+    var MARQUEE_SPEED = 1.3; // columns per second — gentle, not "crazy"
+
     var cells = [];
     var frag = document.createDocumentFragment();
     for (var i = 0; i < COLS * ROWS; i++) {
@@ -174,10 +200,6 @@
       frag.appendChild(cell);
       cells.push({
         el: cell, x: 0, y: 0, v: 0, hoverV: 0,
-        phase: Math.random() * Math.PI * 2,
-        freq: 0.25 + Math.random() * 0.7,
-        amp: 0.07 + Math.random() * 0.16,
-        base: 0.03 + Math.random() * 0.07,
         bobPhase: Math.random() * Math.PI * 2,
         bobFreq: 2.2 + Math.random() * 1.6
       });
@@ -229,27 +251,37 @@
     setInterval(function () {
       if (gridEl.offsetParent === null || document.hidden) return; // not visible, skip work
       var time = (Date.now() - t0) / 1000;
+      var scrollCol = time * MARQUEE_SPEED;
       cells.forEach(function (c, i) {
         var target = 0;
         var hoverTarget = 0;
         if (pointerX !== null) {
+          // Hovering: identical to the plain hover-ripple behavior from
+          // before the marquee was added.
           var dx = c.x - pointerX, dy = c.y - pointerY;
           var dist = Math.sqrt(dx * dx + dy * dy);
           hoverTarget = Math.max(0, 1 - dist / RADIUS);
           hoverTarget = hoverTarget * hoverTarget;
           target = hoverTarget;
         } else if (!padReduceMotion) {
-          target = Math.max(0, c.base + c.amp * Math.sin(time * c.freq + c.phase));
+          // Idle: scroll the name across the grid like an LED marquee
+          // (跑马灯) instead of random shimmer.
+          var row = Math.floor(i / COLS);
+          var col = i % COLS;
+          var fontRow = row - MARQUEE_ROW_OFFSET;
+          if (fontRow >= 0 && fontRow < 7) {
+            var stripCol = Math.floor(col + scrollCol) % STRIP_WIDTH;
+            if (stripCol < 0) stripCol += STRIP_WIDTH;
+            target = stripRows[fontRow][stripCol] === "1" ? 0.55 : 0;
+          }
         }
         c.v += (target - c.v) * 0.3;
         c.hoverV += (hoverTarget - c.hoverV) * 0.25;
 
-        // Every cell drifts gently all the time (natural idle float), and
-        // cells the cursor is actually near get extra, faster bobbing on
-        // top of that.
-        var idleBob = padReduceMotion ? 0 : Math.sin(time * c.freq + c.phase) * 2.5;
+        // Cells the cursor is actually near bob a little on top of the lift —
+        // same as before the marquee was added. Idle/marquee cells don't bob.
         var hoverBob = padReduceMotion ? 0 : Math.sin(time * c.bobFreq + c.bobPhase) * 5 * c.hoverV;
-        var lift = -8 * c.v + idleBob + hoverBob;
+        var lift = -8 * c.v + hoverBob;
 
         c.el.style.setProperty("--v", c.v.toFixed(3));
         c.el.style.setProperty("--lift", lift.toFixed(2) + "px");
