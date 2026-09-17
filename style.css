@@ -173,9 +173,9 @@ a:focus-visible, button:focus-visible{outline:2px solid var(--amber);outline-off
 .pad-cell{
   border-radius:2px;background:var(--amber);
   opacity:calc(0.05 + 0.75 * var(--v, 0));
-  transform:scale(calc(0.68 + 0.62 * var(--v, 0))) translateY(calc(var(--v, 0) * -8px));
+  transform:scale(calc(0.68 + 0.62 * var(--v, 0))) translateY(var(--lift, 0px));
   box-shadow:0 calc(var(--v, 0) * 12px) calc(var(--v, 0) * 16px) calc(var(--v, 0) * -5px) var(--amber);
-  transition:opacity .12s linear, transform .16s ease-out, box-shadow .16s ease-out;
+  transition:opacity .12s linear, transform .1s linear, box-shadow .16s ease-out;
 }
 @media (prefers-reduced-motion:reduce){
   .pad-cell{transition:none;transform:none;box-shadow:none;}

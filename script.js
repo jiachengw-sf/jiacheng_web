@@ -173,11 +173,13 @@
       cell.className = "pad-cell";
       frag.appendChild(cell);
       cells.push({
-        el: cell, x: 0, y: 0, v: 0,
+        el: cell, x: 0, y: 0, v: 0, hoverV: 0,
         phase: Math.random() * Math.PI * 2,
         freq: 0.25 + Math.random() * 0.7,
         amp: 0.07 + Math.random() * 0.16,
-        base: 0.03 + Math.random() * 0.07
+        base: 0.03 + Math.random() * 0.07,
+        bobPhase: Math.random() * Math.PI * 2,
+        bobFreq: 2.2 + Math.random() * 1.6
       });
     }
     gridEl.appendChild(frag);
@@ -229,16 +231,26 @@
       var time = (Date.now() - t0) / 1000;
       cells.forEach(function (c, i) {
         var target = 0;
+        var hoverTarget = 0;
         if (pointerX !== null) {
           var dx = c.x - pointerX, dy = c.y - pointerY;
           var dist = Math.sqrt(dx * dx + dy * dy);
-          target = Math.max(0, 1 - dist / RADIUS);
-          target = target * target;
+          hoverTarget = Math.max(0, 1 - dist / RADIUS);
+          hoverTarget = hoverTarget * hoverTarget;
+          target = hoverTarget;
         } else if (!padReduceMotion) {
           target = Math.max(0, c.base + c.amp * Math.sin(time * c.freq + c.phase));
         }
         c.v += (target - c.v) * 0.3;
+        c.hoverV += (hoverTarget - c.hoverV) * 0.25;
+
+        // Bobbing only happens where the cursor actually is (hoverV > 0) —
+        // idle shimmer never bobs, it only dims/brightens in place.
+        var bob = padReduceMotion ? 0 : Math.sin(time * c.bobFreq + c.bobPhase) * 5 * c.hoverV;
+        var lift = -8 * c.v + bob;
+
         c.el.style.setProperty("--v", c.v.toFixed(3));
+        c.el.style.setProperty("--lift", lift.toFixed(2) + "px");
       });
     }, 50);
   })();
