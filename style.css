@@ -164,6 +164,23 @@ footer.eof{
 
 a:focus-visible, button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
 
+/* ---- pad-grid: hover-reactive glowing grid on about.md ---- */
+.pad-grid{
+  display:grid;grid-template-columns:repeat(auto-fill, 9px);grid-auto-rows:19px;
+  justify-content:space-between;gap:3px;height:135px;overflow:hidden;
+  margin:0 0 26px;cursor:default;
+}
+.pad-cell{
+  border-radius:2px;background:var(--amber);
+  opacity:calc(0.05 + 0.65 * var(--v, 0));
+  transform:scale(calc(0.8 + 0.4 * var(--v, 0)));
+  transition:opacity .1s linear;
+}
+@media (prefers-reduced-motion:reduce){
+  .pad-cell{transition:none;transform:none;}
+}
+@media (max-width:560px){ .pad-grid{height:96px;} }
+
 /* ---- theme toggle ---- */
 .theme-toggle{
   display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;

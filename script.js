@@ -159,4 +159,81 @@
   document.querySelectorAll('[data-file="github"]').forEach(function (b) {
     b.addEventListener("click", function () { loadRepos(); });
   });
+
+  // ---- pad-grid: hover-reactive glowing grid on about.md ----
+  (function () {
+    var gridEl = document.getElementById("padGrid");
+    if (!gridEl) return;
+
+    var COLS = 64, ROWS = 8;
+    var cells = [];
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < COLS * ROWS; i++) {
+      var cell = document.createElement("span");
+      cell.className = "pad-cell";
+      frag.appendChild(cell);
+      cells.push({ el: cell, x: 0, y: 0, v: 0 });
+    }
+    gridEl.appendChild(frag);
+
+    var padReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var pointerX = null, pointerY = null;
+    var RADIUS = 85;
+
+    function measure() {
+      var rect = gridEl.getBoundingClientRect();
+      cells.forEach(function (c) {
+        var r = c.el.getBoundingClientRect();
+        c.x = r.left + r.width / 2 - rect.left;
+        c.y = r.top + r.height / 2 - rect.top;
+      });
+    }
+
+    function setPointer(clientX, clientY) {
+      var rect = gridEl.getBoundingClientRect();
+      pointerX = clientX - rect.left;
+      pointerY = clientY - rect.top;
+    }
+    function clearPointer() { pointerX = null; pointerY = null; }
+
+    gridEl.addEventListener("mousemove", function (e) { setPointer(e.clientX, e.clientY); });
+    gridEl.addEventListener("mouseleave", clearPointer);
+    gridEl.addEventListener("touchmove", function (e) {
+      if (e.touches[0]) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    gridEl.addEventListener("touchend", clearPointer);
+
+    var resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(measure, 200);
+    });
+    measure();
+
+    // If the site loads on a different file (e.g. a #projects deep link), the
+    // grid starts hidden and measures to a collapsed 0x0 box. Re-measure once
+    // "about" is actually opened so hover targeting isn't stuck at (0,0).
+    document.querySelectorAll('[data-file="about"]').forEach(function (b) {
+      b.addEventListener("click", function () { setTimeout(measure, 0); });
+    });
+
+    var t0 = Date.now();
+    setInterval(function () {
+      if (gridEl.offsetParent === null || document.hidden) return; // not visible, skip work
+      var time = (Date.now() - t0) / 1000;
+      cells.forEach(function (c, i) {
+        var target = 0;
+        if (pointerX !== null) {
+          var dx = c.x - pointerX, dy = c.y - pointerY;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          target = Math.max(0, 1 - dist / RADIUS);
+          target = target * target;
+        } else if (!padReduceMotion) {
+          target = Math.max(0, 0.12 + 0.14 * Math.sin(time * 0.6 + i * 0.35));
+        }
+        c.v += (target - c.v) * 0.3;
+        c.el.style.setProperty("--v", c.v.toFixed(3));
+      });
+    }, 50);
+  })();
 })();
