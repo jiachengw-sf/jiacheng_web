@@ -165,10 +165,13 @@
     var gridEl = document.getElementById("padGrid");
     if (!gridEl) return;
 
-    var COLS = 64, ROWS = 8;
+    var CELL_SIZE = 9, CELL_GAP = 3, ROWS = 14;
+    var COLS = 60; // placeholder; computeCols() sets the real value before first render
 
     // Tiny 5x7 dot-matrix font, just the letters needed for the marquee text.
-    var FONT = {
+    // Each row is doubled (7 -> 14) so the letters actually fill the taller
+    // grid instead of being a small shape lost in a lot of empty rows.
+    var FONT_SRC = {
       A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
       C: ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
       E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
@@ -180,31 +183,62 @@
       W: ["10001", "10001", "10001", "10101", "10101", "11011", "10001"],
       " ": ["000", "000", "000", "000", "000", "000", "000"]
     };
+    var FONT_ROWS = 14;
+    var FONT = {};
+    Object.keys(FONT_SRC).forEach(function (k) {
+      var tall = [];
+      FONT_SRC[k].forEach(function (row) { tall.push(row); tall.push(row); });
+      FONT[k] = tall;
+    });
+
     var MARQUEE_TEXT = "JIACHENG WEN    ";
-    var stripRows = ["", "", "", "", "", "", ""];
+    var stripRows = [];
+    for (var sr = 0; sr < FONT_ROWS; sr++) stripRows.push("");
     for (var mc = 0; mc < MARQUEE_TEXT.length; mc++) {
       var glyph = FONT[MARQUEE_TEXT[mc]] || FONT[" "];
-      for (var gr = 0; gr < 7; gr++) {
+      for (var gr = 0; gr < FONT_ROWS; gr++) {
         stripRows[gr] += glyph[gr] + "0"; // 1-column gap after each character
       }
     }
     var STRIP_WIDTH = stripRows[0].length;
-    var MARQUEE_ROW_OFFSET = 1; // leaves 1 blank row at the top of the 8-row grid
+    var MARQUEE_ROW_OFFSET = Math.floor((ROWS - FONT_ROWS) / 2); // vertically centers the name in the grid
     var MARQUEE_SPEED = 1.3; // columns per second — gentle, not "crazy"
 
     var cells = [];
-    var frag = document.createDocumentFragment();
-    for (var i = 0; i < COLS * ROWS; i++) {
-      var cell = document.createElement("span");
-      cell.className = "pad-cell";
-      frag.appendChild(cell);
-      cells.push({
-        el: cell, x: 0, y: 0, v: 0, hoverV: 0,
-        bobPhase: Math.random() * Math.PI * 2,
-        bobFreq: 2.2 + Math.random() * 1.6
-      });
+
+    // The CSS used to let grid-template-columns auto-fill based on
+    // container width, but that meant the browser's real column count and
+    // this script's row/col math for the marquee text could disagree —
+    // which is exactly what garbled the letters and left a half-cut-off
+    // row at the bottom. Instead we measure the container once, decide the
+    // column count ourselves, and pin it with an explicit inline
+    // grid-template-columns so CSS and JS always agree.
+    function computeCols() {
+      var w = gridEl.getBoundingClientRect().width || gridEl.parentElement.clientWidth || 300;
+      var n = Math.floor((w + CELL_GAP) / (CELL_SIZE + CELL_GAP));
+      return Math.max(20, n);
     }
-    gridEl.appendChild(frag);
+
+    function buildGrid() {
+      COLS = computeCols();
+      gridEl.style.gridTemplateColumns = "repeat(" + COLS + ", " + CELL_SIZE + "px)";
+      gridEl.innerHTML = "";
+      cells = [];
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < COLS * ROWS; i++) {
+        var cell = document.createElement("span");
+        cell.className = "pad-cell";
+        frag.appendChild(cell);
+        cells.push({
+          el: cell, x: 0, y: 0, v: 0, hoverV: 0,
+          lastV: NaN, lastLift: NaN, lastGlow: NaN,
+          bobPhase: Math.random() * Math.PI * 2,
+          bobFreq: 2.2 + Math.random() * 1.6
+        });
+      }
+      gridEl.appendChild(frag);
+      measure();
+    }
 
     var padReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var pointerX = null, pointerY = null;
@@ -233,18 +267,26 @@
     }, { passive: true });
     gridEl.addEventListener("touchend", clearPointer);
 
+    buildGrid();
+
     var resizeTimer;
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(measure, 200);
+      resizeTimer = setTimeout(function () {
+        if (computeCols() !== COLS) {
+          buildGrid();
+        } else {
+          measure();
+        }
+      }, 200);
     });
-    measure();
 
     // If the site loads on a different file (e.g. a #projects deep link), the
-    // grid starts hidden and measures to a collapsed 0x0 box. Re-measure once
-    // "about" is actually opened so hover targeting isn't stuck at (0,0).
+    // grid starts hidden and computeCols() sees a collapsed 0-width box.
+    // Rebuild once "about" is actually opened so the column count (and
+    // hover targeting) reflects its real, visible width.
     document.querySelectorAll('[data-file="about"]').forEach(function (b) {
-      b.addEventListener("click", function () { setTimeout(measure, 0); });
+      b.addEventListener("click", function () { setTimeout(buildGrid, 0); });
     });
 
     var t0 = Date.now();
@@ -269,23 +311,35 @@
           var row = Math.floor(i / COLS);
           var col = i % COLS;
           var fontRow = row - MARQUEE_ROW_OFFSET;
-          if (fontRow >= 0 && fontRow < 7) {
+          if (fontRow >= 0 && fontRow < FONT_ROWS) {
             var stripCol = Math.floor(col + scrollCol) % STRIP_WIDTH;
             if (stripCol < 0) stripCol += STRIP_WIDTH;
-            target = stripRows[fontRow][stripCol] === "1" ? 0.55 : 0;
+            target = stripRows[fontRow][stripCol] === "1" ? 0.6 : 0;
           }
         }
         c.v += (target - c.v) * 0.3;
         c.hoverV += (hoverTarget - c.hoverV) * 0.25;
+        // Snap tiny residuals to exactly 0 so settled cells stop being
+        // rewritten (and stop retriggering CSS transitions) every tick.
+        if (target === 0 && c.v < 0.004) c.v = 0;
+        if (hoverTarget === 0 && c.hoverV < 0.004) c.hoverV = 0;
 
         // Cells the cursor is actually near bob a little on top of the lift —
         // same as before the marquee was added. Idle/marquee cells don't bob.
         var hoverBob = padReduceMotion ? 0 : Math.sin(time * c.bobFreq + c.bobPhase) * 5 * c.hoverV;
         var lift = -8 * c.v + hoverBob;
 
-        c.el.style.setProperty("--v", c.v.toFixed(3));
-        c.el.style.setProperty("--lift", lift.toFixed(2) + "px");
+        // The glow shadow is expensive to paint on many elements at once, so
+        // it's only ever driven by hoverV (a handful of cells under the
+        // cursor) — the marquee can light up a whole row of cells without
+        // ever paying for it.
+        var vR = Math.round(c.v * 200) / 200;
+        var liftR = Math.round(lift * 5) / 5;
+        var glowR = Math.round(c.hoverV * 200) / 200;
+        if (vR !== c.lastV) { c.el.style.setProperty("--v", vR); c.lastV = vR; }
+        if (liftR !== c.lastLift) { c.el.style.setProperty("--lift", liftR + "px"); c.lastLift = liftR; }
+        if (glowR !== c.lastGlow) { c.el.style.setProperty("--glow", glowR); c.lastGlow = glowR; }
       });
-    }, 50);
+    }, 60);
   })();
 })();

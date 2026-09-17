@@ -5,6 +5,7 @@
   --selection-text:#fff;
   --quote:#3a352c;
   --tile-b:#efe6d0; --tile-c:#e6e0ef;
+  --pad-peak:#140d02;
 }
 [data-theme="dark"]{
   --bg:#1e1c1a; --bg-2:#242220; --bg-3:#2b2926; --line:#38352f;
@@ -13,6 +14,7 @@
   --selection-text:#1e1c1a;
   --quote:#c9c5ba;
   --tile-b:#2a2318; --tile-c:#231f2a;
+  --pad-peak:#ffffff;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;}
@@ -167,22 +169,21 @@ a:focus-visible, button:focus-visible{outline:2px solid var(--amber);outline-off
 /* ---- pad-grid: hover-reactive glowing grid on about.md ---- */
 .pad-grid{
   display:grid;grid-template-columns:repeat(auto-fill, 9px);grid-auto-rows:19px;
-  justify-content:space-between;gap:3px;height:135px;overflow:hidden;
+  justify-content:space-between;gap:3px;height:305px;overflow:hidden;
   margin:0 0 26px;cursor:default;
 }
 .pad-cell{
   border-radius:2px;
   background:var(--amber);
-  background:color-mix(in srgb, var(--amber), white calc(var(--v, 0) * 88%));
+  background:color-mix(in srgb, var(--amber), var(--pad-peak) calc(var(--v, 0) * 75%));
   opacity:calc(0.008 + 1 * var(--v, 0));
   transform:scale(calc(0.68 + 0.62 * var(--v, 0))) translateY(var(--lift, 0px));
-  box-shadow:0 calc(var(--v, 0) * 16px) calc(var(--v, 0) * 26px) calc(var(--v, 0) * -3px) var(--amber);
+  box-shadow:0 calc(var(--glow, 0) * 16px) calc(var(--glow, 0) * 26px) calc(var(--glow, 0) * -3px) var(--amber);
   transition:opacity .12s linear, background-color .12s linear, transform .1s linear, box-shadow .16s ease-out;
 }
 @media (prefers-reduced-motion:reduce){
   .pad-cell{transition:none;transform:none;box-shadow:none;}
 }
-@media (max-width:560px){ .pad-grid{height:96px;} }
 
 /* ---- theme toggle ---- */
 .theme-toggle{
