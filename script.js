@@ -290,9 +290,23 @@
     });
 
     var t0 = Date.now();
-    setInterval(function () {
+    var lastFrame = t0;
+    // Smoothing factors below were tuned per-60ms-tick (0.3 and 0.25). Redone
+    // as a time constant so the same easing feel holds at any frame rate —
+    // requestAnimationFrame runs at the display's real refresh rate (usually
+    // 60fps+), which is what makes the scroll read as continuous instead of
+    // visibly stepping every ~60ms.
+    var V_TAU = 0.17, HOVER_TAU = 0.21;
+
+    function frame() {
+      requestAnimationFrame(frame);
       if (gridEl.offsetParent === null || document.hidden) return; // not visible, skip work
-      var time = (Date.now() - t0) / 1000;
+      var now = Date.now();
+      var dt = Math.min(0.1, (now - lastFrame) / 1000); // clamp so a tab-switch pause can't jump the animation
+      lastFrame = now;
+      var vLerp = 1 - Math.exp(-dt / V_TAU);
+      var hoverLerp = 1 - Math.exp(-dt / HOVER_TAU);
+      var time = (now - t0) / 1000;
       var scrollCol = time * MARQUEE_SPEED;
       cells.forEach(function (c, i) {
         var target = 0;
@@ -317,8 +331,8 @@
             target = stripRows[fontRow][stripCol] === "1" ? 0.6 : 0;
           }
         }
-        c.v += (target - c.v) * 0.3;
-        c.hoverV += (hoverTarget - c.hoverV) * 0.25;
+        c.v += (target - c.v) * vLerp;
+        c.hoverV += (hoverTarget - c.hoverV) * hoverLerp;
         // Snap tiny residuals to exactly 0 so settled cells stop being
         // rewritten (and stop retriggering CSS transitions) every tick.
         if (target === 0 && c.v < 0.004) c.v = 0;
@@ -340,6 +354,7 @@
         if (liftR !== c.lastLift) { c.el.style.setProperty("--lift", liftR + "px"); c.lastLift = liftR; }
         if (glowR !== c.lastGlow) { c.el.style.setProperty("--glow", glowR); c.lastGlow = glowR; }
       });
-    }, 60);
+    }
+    requestAnimationFrame(frame);
   })();
 })();
